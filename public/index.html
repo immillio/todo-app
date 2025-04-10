@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
     <style>
-        /* Basic CSS for layout - we can move this to style.css later */
+        /* CSS remains the same */
         .container {
             max-width: 600px;
             margin: 20px auto;
@@ -39,7 +39,6 @@
     <div class="container">
         <h1>Todo List</h1>
         
-        <!-- Form to add new tasks -->
         <form class="task-form" id="taskForm">
             <input 
                 type="text" 
@@ -51,22 +50,19 @@
             <button type="submit">Add Task</button>
         </form>
 
-        <!-- List where tasks will appear -->
         <ul class="task-list" id="taskList">
-            <!-- Tasks will be inserted here by JavaScript -->
         </ul>
     </div>
 
     <script>
-        // Get references to our HTML elements
         const taskForm = document.getElementById('taskForm');
         const taskInput = document.getElementById('taskInput');
         const taskList = document.getElementById('taskList');
 
-        // Function to fetch all tasks from the server
+        // Updated to use relative paths
         async function fetchTasks() {
             try {
-                const response = await fetch('http://localhost:3000/tasks');
+                const response = await fetch('/tasks');  // Changed from http://localhost:3000/tasks
                 const tasks = await response.json();
                 displayTasks(tasks);
             } catch (error) {
@@ -74,14 +70,12 @@
             }
         }
 
-        // Function to display tasks in the UI
         function displayTasks(tasks) {
-            taskList.innerHTML = ''; // Clear current list
+            taskList.innerHTML = '';
             tasks.forEach(task => {
                 const li = document.createElement('li');
                 li.className = 'task-item';
                 
-                // Add task description
                 li.innerHTML = `
                     <span>${task.description}</span>
                     <button onclick="deleteTask(${task.id})">Delete</button>
@@ -91,25 +85,25 @@
             });
         }
 
-        // Function to delete a task
+        // Updated to use relative paths
         async function deleteTask(id) {
             try {
-                await fetch(`http://localhost:3000/tasks/${id}`, {
+                await fetch(`/tasks/${id}`, {  // Changed from http://localhost:3000/tasks/${id}
                     method: 'DELETE'
                 });
-                fetchTasks(); // Refresh the list
+                fetchTasks();
             } catch (error) {
                 console.error('Error deleting task:', error);
             }
         }
 
-        // Handle form submission
+        // Updated to use relative paths
         taskForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Prevent form from submitting normally
+            e.preventDefault();
             
             const description = taskInput.value;
             try {
-                await fetch('http://localhost:3000/tasks', {
+                await fetch('/tasks', {  // Changed from http://localhost:3000/tasks
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -117,14 +111,13 @@
                     body: JSON.stringify({ description })
                 });
                 
-                taskInput.value = ''; // Clear input
-                fetchTasks(); // Refresh the list
+                taskInput.value = '';
+                fetchTasks();
             } catch (error) {
                 console.error('Error adding task:', error);
             }
         });
 
-        // Fetch tasks when page loads
         fetchTasks();
     </script>
 </body>
