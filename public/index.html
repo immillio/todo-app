@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
     <style>
-        /* CSS remains the same */
         .container {
             max-width: 600px;
             margin: 20px auto;
@@ -50,8 +49,7 @@
             <button type="submit">Add Task</button>
         </form>
 
-        <ul class="task-list" id="taskList">
-        </ul>
+        <ul class="task-list" id="taskList"></ul>
     </div>
 
     <script>
@@ -59,11 +57,14 @@
         const taskInput = document.getElementById('taskInput');
         const taskList = document.getElementById('taskList');
 
-        // Updated to use relative paths
         async function fetchTasks() {
             try {
-                const response = await fetch('/tasks');  // Changed from http://localhost:3000/tasks
+                const response = await fetch('/tasks');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const tasks = await response.json();
+                console.log('Fetched tasks:', tasks); // Debug log
                 displayTasks(tasks);
             } catch (error) {
                 console.error('Error fetching tasks:', error);
@@ -78,38 +79,47 @@
                 
                 li.innerHTML = `
                     <span>${task.description}</span>
-                    <button onclick="deleteTask(${task.id})">Delete</button>
+                    <button onclick="deleteTask('${task._id}')">Delete</button>
                 `;
                 
                 taskList.appendChild(li);
             });
         }
 
-        // Updated to use relative paths
         async function deleteTask(id) {
             try {
-                await fetch(`/tasks/${id}`, {  // Changed from http://localhost:3000/tasks/${id}
+                console.log('Deleting task:', id); // Debug log
+                const response = await fetch(`/tasks/${id}`, {
                     method: 'DELETE'
                 });
-                fetchTasks();
+                
+                if (response.ok) {
+                    console.log('Task deleted successfully');
+                    fetchTasks();
+                } else {
+                    console.error('Failed to delete task:', response.status);
+                }
             } catch (error) {
                 console.error('Error deleting task:', error);
             }
         }
 
-        // Updated to use relative paths
         taskForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const description = taskInput.value;
             try {
-                await fetch('/tasks', {  // Changed from http://localhost:3000/tasks
+                const response = await fetch('/tasks', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ description })
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 
                 taskInput.value = '';
                 fetchTasks();
@@ -118,6 +128,7 @@
             }
         });
 
+        // Initial load
         fetchTasks();
     </script>
 </body>
