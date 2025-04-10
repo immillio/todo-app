@@ -6,16 +6,36 @@ const mongoose = require('mongoose');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI)
-
-.then(() => console.log('Connected to MongoDB'))
+// MongoDB connection with options
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log('Connected to MongoDB Atlas'))
 .catch(err => console.error('MongoDB connection error:', err));
 
-// Define Task Schema
+// Handle MongoDB connection events
+mongoose.connection.on('error', err => {
+    console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB disconnected');
+});
+
+// Define Task Schema with timestamps
 const taskSchema = new mongoose.Schema({
-    description: String,
-    createdAt: { type: Date, default: Date.now }
+    description: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    createdAt: { 
+        type: Date, 
+        default: Date.now 
+    }
+}, {
+    timestamps: true
 });
 
 const Task = mongoose.model('Task', taskSchema);
@@ -30,6 +50,7 @@ app.get('/tasks', async (req, res) => {
         const tasks = await Task.find().sort({ createdAt: -1 });
         res.json(tasks);
     } catch (err) {
+        console.error('Error fetching tasks:', err);
         res.status(500).json({ error: 'Failed to fetch tasks' });
     }
 });
@@ -37,12 +58,16 @@ app.get('/tasks', async (req, res) => {
 // Create a new task
 app.post('/tasks', async (req, res) => {
     try {
+        if (!req.body.description) {
+            return res.status(400).json({ error: 'Description is required' });
+        }
         const task = new Task({
             description: req.body.description
         });
         const savedTask = await task.save();
         res.status(201).json(savedTask);
     } catch (err) {
+        console.error('Error creating task:', err);
         res.status(500).json({ error: 'Failed to create task' });
     }
 });
@@ -50,11 +75,21 @@ app.post('/tasks', async (req, res) => {
 // Delete a task
 app.delete('/tasks/:id', async (req, res) => {
     try {
-        await Task.findByIdAndDelete(req.params.id);
+        const task = await Task.findByIdAndDelete(req.params.id);
+        if (!task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
         res.status(204).send();
     } catch (err) {
+        console.error('Error deleting task:', err);
         res.status(500).json({ error: 'Failed to delete task' });
     }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something broke!' });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
