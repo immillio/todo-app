@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <style>
+        /* Basic CSS for layout - we can move this to style.css later */
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .task-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .task-input {
+            flex: 1;
+            padding: 8px;
+        }
+        .task-list {
+            list-style: none;
+            padding: 0;
+        }
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Todo List</h1>
+        
+        <!-- Form to add new tasks -->
+        <form class="task-form" id="taskForm">
+            <input 
+                type="text" 
+                id="taskInput" 
+                class="task-input" 
+                placeholder="Enter a new task"
+                required
+            >
+            <button type="submit">Add Task</button>
+        </form>
+
+        <!-- List where tasks will appear -->
+        <ul class="task-list" id="taskList">
+            <!-- Tasks will be inserted here by JavaScript -->
+        </ul>
+    </div>
+
+    <script>
+        // Get references to our HTML elements
+        const taskForm = document.getElementById('taskForm');
+        const taskInput = document.getElementById('taskInput');
+        const taskList = document.getElementById('taskList');
+
+        // Function to fetch all tasks from the server
+        async function fetchTasks() {
+            try {
+                const response = await fetch('http://localhost:3000/tasks');
+                const tasks = await response.json();
+                displayTasks(tasks);
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+            }
+        }
+
+        // Function to display tasks in the UI
+        function displayTasks(tasks) {
+            taskList.innerHTML = ''; // Clear current list
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = 'task-item';
+                
+                // Add task description
+                li.innerHTML = `
+                    <span>${task.description}</span>
+                    <button onclick="deleteTask(${task.id})">Delete</button>
+                `;
+                
+                taskList.appendChild(li);
+            });
+        }
+
+        // Function to delete a task
+        async function deleteTask(id) {
+            try {
+                await fetch(`http://localhost:3000/tasks/${id}`, {
+                    method: 'DELETE'
+                });
+                fetchTasks(); // Refresh the list
+            } catch (error) {
+                console.error('Error deleting task:', error);
+            }
+        }
+
+        // Handle form submission
+        taskForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent form from submitting normally
+            
+            const description = taskInput.value;
+            try {
+                await fetch('http://localhost:3000/tasks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ description })
+                });
+                
+                taskInput.value = ''; // Clear input
+                fetchTasks(); // Refresh the list
+            } catch (error) {
+                console.error('Error adding task:', error);
+            }
+        });
+
+        // Fetch tasks when page loads
+        fetchTasks();
+    </script>
+</body>
+</html>
